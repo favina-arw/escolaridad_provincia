@@ -12,76 +12,53 @@ import org.apache.poi.ss.usermodel.Sheet;
 import java.io.File;
 import java.io.IOException;
 import java.time.Year;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-@Getter
 @Setter
-
+@NoArgsConstructor
 public class AlumnosGrabber {
-    private static List<AlumnoData> alumnos = new LinkedList<>();
 
-    public AlumnosGrabber(){
-        this.cargarAlumnos();
-    }
+    private List<AlumnoData> alumnos = new ArrayList<>();
 
-    public List<AlumnoData> getAlumnos (){
-        if (alumnos.isEmpty())
-            throw new RuntimeException("Lista vacía");
-        else
-            return alumnos;
+    public List<AlumnoData> getAlumnos(){
+        cargarAlumnos();
+        return this.alumnos;
     }
 
     public void cargarAlumnos(){
-        FileGrabber fileGrabber = new FileGrabber("C:/Users/Admin/reportes_para_apropiacion_escolaridad/DATOS");
-        List<String> archivos = fileGrabber.seleccionarArchivos();
-        archivos.forEach(archivo -> {
-            try {
-                AlumnoData alumnoData = new AlumnoData();
+        try{
+            FileGrabber fileGrabber = new FileGrabber("C:/Users/Admin/reportes_para_apropiacion_escolaridad/DATOS");
+            List<String> archivos = fileGrabber.seleccionarArchivos();
+            for(String archivo : archivos){
                 POIFSFileSystem fs = new POIFSFileSystem(new File(archivo));
-                HSSFWorkbook libro = new HSSFWorkbook(fs.getRoot(), true);
+                HSSFWorkbook libro = new HSSFWorkbook(fs.getRoot(),true);
                 Sheet hoja = libro.getSheetAt(0);
 
-                alumnoData.setCueAnexo(Integer.parseInt(hoja.getRow(1).getCell(0).getStringCellValue().split("-")[0].replace(" ", "")));
-                alumnoData.setNivelEducativo(hoja.getRow(1).getCell(0).getStringCellValue().split("-")[2].replace(" ", ""));
-
-                for (int i = 3; i < hoja.getLastRowNum(); i++) {
+                AlumnoData alumnoData = new AlumnoData();
+                for (int i = 0; i < hoja.getLastRowNum(); i++) {
+                    alumnoData.setCueAnexo(Integer.parseInt(hoja.getRow(1).getCell(0).getStringCellValue().split("-")[0].trim()));
+                    alumnoData.setNivelEducativo(hoja.getRow(1).getCell(0).getStringCellValue().split("-")[2].trim());
                     Row fila = hoja.getRow(i);
+                    if(fila.getCell(1).getStringCellValue().split(" ")[0].equalsIgnoreCase("DNI")){
+                        alumnoData.setNombreApellido(fila.getCell(0).getStringCellValue().replace(",", " "));
+                        alumnoData.setDni(Integer.parseInt(fila.getCell(1).getStringCellValue().split(" ")[1]));
+                        alumnoData.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ':
+                                fila.getCell(4).getStringCellValue().charAt(0));
+                        alumnoData.setCicloLectivo("2024");
+                        alumnoData.setEsAlumnoRegular(fila.getCell(8).getStringCellValue().equalsIgnoreCase("Regular") ? 'S' : 'N');
 
-                    if (fila.getCell(1).getStringCellValue().split(" ")[0].equals("DNI")){
-
-                        alumnoData.setNombreApellido(fila.getCell(0).getStringCellValue());
-                        if (fila.getCell(1).getStringCellValue().split(" ")[1].length() < 11)
-                            alumnoData.setDni(Integer.parseInt(fila.getCell(1).getStringCellValue().split(" ")[1]));
-                        else
-                            alumnoData.setDni(Integer.parseInt(fila.getCell(1).getStringCellValue().split(" ")[1].substring(2,10)));
-
-                        alumnoData.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().charAt(0));
-                        alumnoData.setCicloLectivo(Year.now().toString());
-                        alumnoData.setEsAlumnoRegular(
-                                fila.getCell(8).getStringCellValue().equals("Regular") ? 'S' : 'N'
-                        );
-
-                        alumnos.add(alumnoData);
+                        this.alumnos.add(alumnoData);
+                        System.out.println("Agregado: " + alumnoData);
                     }
                 }
 
-                /* CERRADO DE ARCHIVO */
-                fs.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-
-        });
-
-    }
-
-    public AlumnoData buscar(int dni, String apellidoNombre){
-        for (AlumnoData alumno : alumnos){
-            if (alumno.getDni() == dni && alumno.getNombreApellido().equalsIgnoreCase(apellidoNombre))
-                return alumno;
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        return null;
+
+
     }
+
 }

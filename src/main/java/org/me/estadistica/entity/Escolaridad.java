@@ -31,10 +31,7 @@ public class Escolaridad {
     char esAlumnoRegular;
 
     public void setGradoAnio(String gradoAnio){
-        if(this.nivel.equals("02") || this.nivel.equals("01"))
-            this.gradoAnio = gradoAnio;
-        else
-            this.gradoAnio = "";
+        this.gradoAnio = gradoAnio;
     }
 
     public void setCueAnexo(@NonNull String cueAnexo) {
@@ -57,18 +54,21 @@ public class Escolaridad {
     }
 
     public void setNivel(@NonNull String nivel) {
-        if(Integer.parseInt(nivel) < 10)
-            this.nivel = this.agregarCerosAdelante(nivel, 2);
-        this.nivel = nivel;
+        this.nivel = agregarCerosAdelante(nivel,2);
     }
 
     public void setFechaInicioCicloLectivo(String fechaInicioCicloLectivo) {
-        if(Integer.parseInt(this.nivel) > 5)
-            this.fechaInicioCicloLectivo = fechaInicioCicloLectivo;;
+        if(fechaInicioCicloLectivo.isEmpty() || fechaInicioCicloLectivo.isBlank())
+            this.fechaInicioCicloLectivo = "        ";
+        else if(Integer.parseInt(this.nivel) > 5)
+            this.fechaInicioCicloLectivo = fechaInicioCicloLectivo;
+
     }
 
     public void setNombreCursoCarrera(String nombreCursoCarrera) {
-        if(Integer.parseInt(this.nivel) > 5)
+        if(nombreCursoCarrera.isEmpty() || nombreCursoCarrera.isBlank())
+            this.nombreCursoCarrera = "";
+        else if(Integer.parseInt(this.nivel) > 5)
             this.nombreCursoCarrera = nombreCursoCarrera;
     }
 
@@ -76,7 +76,7 @@ public class Escolaridad {
         //La fecha de certificación, se refiere a la fecha en la que el estableimiento educativo
         //acredita la escolaridad del menor.
         //Debe ser mayor o igual a la fecha de inicio de ciclo lectivo.
-        this.fechaCertificacion = formatearFechaExtrangera(fechaCertificacion);
+        this.fechaCertificacion = formatearFechaArgentina(fechaCertificacion);
     }
 
     public void setEsEducacionOficial(@NonNull String esEducacionOficial) {
