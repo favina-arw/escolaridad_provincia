@@ -17,16 +17,25 @@ public class Escolaridad {
     private static final String CODIGO_DEPENDENCIA = "90022804";
     private static final String FIN_TUPLA = "\r\n";
 
-    @NonNull
-    String cueAnexo, regice, cuilEstudiante, cicloLectivo, nivel;
 
+    String cueAnexo = "";
+    String regice = "";
+    String cuilEstudiante = "";
+    String cicloLectivo = "";
+    String nivel = "";
     String gradoAnio ="";
-    String nombreCursoCarrera="";
-    String fechaCertificacion="";
-    String fechaInicioCicloLectivo="";
+    String nombreCursoCarrera = "";
+    String fechaCertificacion = "";
+    String fechaInicioCicloLectivo = "";
+    char esEducacionOficial;
+    char esAlumnoRegular;
 
-    @NonNull
-    char esEducacionOficial, esAlumnoRegular;
+    public void setGradoAnio(String gradoAnio){
+        if(this.nivel.equals("02") || this.nivel.equals("01"))
+            this.gradoAnio = gradoAnio;
+        else
+            this.gradoAnio = "";
+    }
 
     public void setCueAnexo(@NonNull String cueAnexo) {
         this.cueAnexo = this.agregarCerosAdelante(cueAnexo,9);
@@ -48,13 +57,9 @@ public class Escolaridad {
     }
 
     public void setNivel(@NonNull String nivel) {
-        this.nivel = this.agregarCerosAdelante(nivel, 2);
-    }
-
-    public void setGradoAnio(String gradoAnio) {
-        if(this.nivel == "1" || this.nivel == "01" || this.nivel == "2" || this.nivel == "02"){
-            this.gradoAnio = gradoAnio;
-        }
+        if(Integer.parseInt(nivel) < 10)
+            this.nivel = this.agregarCerosAdelante(nivel, 2);
+        this.nivel = nivel;
     }
 
     public void setFechaInicioCicloLectivo(String fechaInicioCicloLectivo) {
