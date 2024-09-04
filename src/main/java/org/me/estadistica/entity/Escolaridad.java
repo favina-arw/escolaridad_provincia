@@ -125,18 +125,18 @@ public class Escolaridad {
 
     @Override
     public String toString() {
-        return this.cueAnexo + ";" +
-                this.regice + ";" +
-                this.cuilEstudiante + ";" +
-                this.cicloLectivo + ";" +
-                this.nivel + ";" +
-                this.gradoAnio + ";" +
+        return agregarCerosAdelante(this.cueAnexo, 9) + ";" +
+                agregarCerosAdelante(this.regice, 10) + ";" +
+                agregarCerosAdelante(this.cuilEstudiante, 11) + ";" +
+                agregarCerosAdelante(this.cicloLectivo, 4) + ";" +
+                agregarCerosAdelante(this.nivel, 2) + ";" +
+                agregarCerosAdelante(this.gradoAnio, 1) + ";" +
                 this.esEducacionOficial + ";" +
                 this.esAlumnoRegular + ";" +
-                this.fechaInicioCicloLectivo + ";" +
-                this.nombreCursoCarrera + ";" +
-                this.fechaCertificacion + ";" +
-                CODIGO_DEPENDENCIA + ";" +
+                agregarEspaciosAlFinal(this.fechaInicioCicloLectivo, 8) + ";" +
+                agregarEspaciosAlFinal(this.nombreCursoCarrera, 80) + ";" +
+                agregarCerosAdelante(this.fechaCertificacion, 8) + ";" +
+                CODIGO_DEPENDENCIA +
                 FIN_TUPLA;
     }
 }
