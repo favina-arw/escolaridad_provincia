@@ -28,6 +28,7 @@ public class Main {
                 Sheet hoja = libro.getSheetAt(0);
 
                 int cueAnexo = Integer.parseInt(hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[0].trim());
+                //El nivel se buscar ahora 2 posiciones ANTES del final de los datos.
                 String nivel = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[hoja.getRow(1).getCell(0).getStringCellValue().split(" - ").length - 2].trim();
                 String modalidad = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[3].trim();
 
