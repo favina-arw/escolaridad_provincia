@@ -16,7 +16,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        FileGrabber fl = new FileGrabber("C:/Users/Admin/reportes_para_apropiacion_escolaridad/DATOS");
+        FileGrabber fl = new FileGrabber("C:/Users/Admin/reportes_para_apropiacion_escolaridad/DATOS_PRUEBA");
         List<String> rutas = fl.seleccionarArchivos();
         List<String> apropiados = TextFileReader.readTextFile("C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_SITASI/SIE58451/APROPIA.F240826.txt");
         List<AlumnoData> datosAlumnos = new ArrayList<>();
@@ -51,12 +51,13 @@ public class Main {
 
                     if(modalidad.equalsIgnoreCase("Adultos")){
                         alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[1].charAt(0));
-                    } else if(nivel.equalsIgnoreCase("Inicial")){
-                        if(fila.getCell(4).getStringCellValue().split(" ")[0].equalsIgnoreCase("Lactantes") ||
-                                fila.getCell(4).getStringCellValue().split(" ")[0].equalsIgnoreCase("Deambuldores"))
+                    } else if(nivel.equalsIgnoreCase("Inicial")) {
+                        if (fila.getCell(4).getStringCellValue().equalsIgnoreCase("Lactantes") ||
+                                fila.getCell(4).getStringCellValue().equalsIgnoreCase("Deambuladores")){
                             alumnoAux.setGradoAño('0');
-                        else
+                        }else{
                             alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[2].charAt(0));
+                        }
                     }else{
                         alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().charAt(0));
                     }
@@ -129,7 +130,7 @@ public class Main {
         LocalDate fechaActual = LocalDate.now();
         DateTimeFormatter formato = DateTimeFormatter.ofPattern("yyMMdd");
         String hoy = fechaActual.format(formato);
-        String archivo = "C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_PROPIOS/CERTESC_90022804_"+hoy+".txt";
+        String archivo = "C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_PROPIOS_PRUEBA/CERTESC_90022804_"+hoy+".txt";
 
         try(BufferedWriter escritor = new BufferedWriter(
                 new OutputStreamWriter(
