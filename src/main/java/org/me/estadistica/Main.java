@@ -1,97 +1,211 @@
 package org.me.estadistica;
 
-
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.me.estadistica.entity.Escolaridad;
-import org.me.estadistica.util.FileGrabber;
+import org.me.estadistica.util.*;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        FileGrabber fl = new FileGrabber("C:/Users/Admin/reportes_para_apropiacion_escolaridad/DATOS_PRUEBA");
+        List<String> rutas = fl.seleccionarArchivos();
+        List<String> apropiados = TextFileReader.readTextFile("C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_SITASI/SIE58451/APROPIA.F240826.txt");
+        List<AlumnoData> datosAlumnos = new ArrayList<>();
 
-        try {
-            FileGrabber fg = new FileGrabber();
-            String rutaDestino = "";
-
-            if(args.length == 0){
-                Scanner input = new Scanner(System.in);
-                System.out.println("Ingrese la ruta absoluta donde se encuentran los archivos a leer");
-                fg.setPathToFiles(input.nextLine());
-                System.out.println("Ingrese la ruta absoluta donde se deba depositar el archivo resulante");
-                rutaDestino = input.nextLine();
-                System.out.println(rutaDestino);
-                if (rutaDestino.charAt(rutaDestino.length()-1) != '/'){
-                    rutaDestino.concat("/");
-                }
-                System.out.println(rutaDestino);
-            }else{
-                fg.setPathToFiles(args[0]);
-                rutaDestino = args[1];
-            }
-            List<String> archivos = fg.seleccionarArchivos();
-
-            LocalDate fechaActual = LocalDate.now();
-            DateTimeFormatter formato = DateTimeFormatter.ofPattern("yyMMdd");
-            String hoy = fechaActual.format(formato);
-
-            //rutaDestino+"/APRO.CE.XX."+hoy+".txt"
-
-            BufferedWriter escritor = new BufferedWriter(
-                    new OutputStreamWriter(
-                            new FileOutputStream(rutaDestino+"/CERTESC_90022804_"+hoy+".txt"),"Windows-1252"));
-
-            /*PARA PENSAR*/
-            /*¿CÓMO VAMOS A ENCONTRAR A LOS ALUMNOS?*/
-
-            for (String archivo : archivos){
-                POIFSFileSystem fs = new POIFSFileSystem(new File(archivo));
+        try{
+            for(String ruta : rutas){
+                POIFSFileSystem fs = new POIFSFileSystem(new File(ruta));
                 HSSFWorkbook libro = new HSSFWorkbook(fs.getRoot(),true);
                 Sheet hoja = libro.getSheetAt(0);
 
-                Escolaridad escolaridad = new Escolaridad();
+                int cueAnexo = Integer.parseInt(hoja.getRow(1).getCell(0).getStringCellValue().split("-")[0].trim());
+                String nivel = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[2].trim();
+                String modalidad = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[3].trim();
 
-                //Cambiar el 0 por la fila en la que comienzan los datos
-                for (int i = 0; i <= hoja.getLastRowNum() ; i++){
+                for (int i = 3; i <= hoja.getLastRowNum(); i++) {
                     Row fila = hoja.getRow(i);
-                    /* INICIO LOGICA DE ARMADO DEL OBJETO ESCOLARIDAD */
+                    AlumnoData alumnoAux = new AlumnoData();
+                    alumnoAux.setCueAnexo(cueAnexo);
+                    alumnoAux.setCuilt(0);
+                    if(fila.getCell(1).getStringCellValue().split(" ")[0].equalsIgnoreCase("DNI")){
+                        if(fila.getCell(1).getStringCellValue().split(" ")[1].length() == 11 ){
+                            alumnoAux.setDni(Integer.parseInt(fila.getCell(1).getStringCellValue().split(" ")[1].substring(2,10)));
+                        }else{
+                            alumnoAux.setDni(Integer.parseInt(fila.getCell(1).getStringCellValue().split(" ")[1]));
+                        }
+                    }else{
+                        alumnoAux.setDni(0);
+                    }
+                    alumnoAux.setNombreApellido(fila.getCell(0).getStringCellValue().replace(",", "").trim());
+                    alumnoAux.setCicloLectivo(Year.now().toString());
+                    alumnoAux.setNivelEducativo(nivel);
 
+                    if(modalidad.equalsIgnoreCase("Adultos")){
+                        alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[1].charAt(0));
+                    } else if(nivel.equalsIgnoreCase("Inicial")) {
+                        if (fila.getCell(4).getStringCellValue().equalsIgnoreCase("Lactantes") ||
+                                fila.getCell(4).getStringCellValue().equalsIgnoreCase("Deambuladores")){
+                            alumnoAux.setGradoAño('0');
+                        }else{
+                            alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[2].charAt(0));
+                        }
+                    }else{
+                        alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().charAt(0));
+                    }
 
+                    alumnoAux.setEsAlumnoRegular(fila.getCell(8).getStringCellValue().equalsIgnoreCase("Regular")? 'S' : 'N');
 
-                    /* FIN LOGICA DE ARMADO DEL OBJETO ESCOLARIDAD */
-                    escritor.write(escolaridad.toString());
+                    //System.out.println("Alumno generado: " + alumnoAux);
+                    datosAlumnos.add(alumnoAux);
+
                 }
-                escritor.write(escolaridad.toString());
-                /*---- CERRDADO DE ARCHIVO DE LECTURA----*/
-                fs.close();
+
             }
-            /*---- CERRDADO DE ARCHIVO DE ESCRITURA----*/
-            escritor.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        List<String> alumnosNoEncontrados = new ArrayList<>();
+        List<AlumnoData> alumnosNoRegulares = new ArrayList<>();
+        List<Escolaridad> escolaridadesParaImprimir = new ArrayList<>();
+        for(String apropiado : apropiados){
+            AlumnoData alumnoApropiado = new AlumnoData();
+            Escolaridad escolaridad = new Escolaridad();
+            int dni = Integer.parseInt(apropiado.substring(2,10));
+            String apellidoNombre = apropiado.substring(10,50).trim();
+            Long cuilt = Long.parseLong(apropiado.substring(149,160));
+
+            for (AlumnoData a : datosAlumnos){
+                if(a.getDni() == dni && a.getNombreApellido().equalsIgnoreCase(apellidoNombre)){
+                    alumnoApropiado = a;
+                    break;
+                }
+            }
+
+            if(alumnoApropiado == null){
+                alumnosNoEncontrados.add(apropiado);
+            }else if(!alumnoApropiado.isAlumnoRegular()){
+                alumnosNoRegulares.add(alumnoApropiado);
+                /*
+                System.out.println("--------------ALUMNO NO REGULAR----------------");
+                System.out.println("DNI: " + dni + ".-");
+                System.out.println("APELLIDO Y NOMBRE: " + apellidoNombre + ".-");
+                System.out.println("CUIL/T: " + cuilt + ".-");
+                System.out.println("------------------------------------------------");
+
+                 */
+            }else{
+                escolaridad.setCueAnexo(String.valueOf(alumnoApropiado.getCueAnexo()));
+                escolaridad.setRegice("          "); //10 espacios en blanco
+                escolaridad.setCuilEstudiante(String.valueOf(cuilt));
+                escolaridad.setCicloLectivo(alumnoApropiado.getCicloLectivo());
+                //System.out.println(alumnoApropiado.getNivelEducativo());
+                escolaridad.setNivel(String.valueOf(alumnoApropiado.getNivelEducativo()));
+                //System.out.println(alumnoApropiado.getGradoAño());
+                escolaridad.setGradoAnio(alumnoApropiado.getGradoAño()+"");
+                escolaridad.setEsEducacionOficial("S");
+                escolaridad.setEsAlumnoRegular(alumnoApropiado.getEsAlumnoRegular()+"");
+                escolaridad.setFechaInicioCicloLectivo(""); //8 espacios en blanco
+                escolaridad.setNombreCursoCarrera("");
+                escolaridad.setFechaCertificacion("23/08/2024");
+
+                escolaridadesParaImprimir.add(escolaridad);
+
+
+            }
+        }
+        System.out.println("Alumnos apropiados no encontrados: " + alumnosNoEncontrados.size());
+        System.out.println("Alumnos apropiados no regulares: " + alumnosNoRegulares.size());
+        System.out.println("Alumnos escolarizados listos para enviar: " + escolaridadesParaImprimir.size());
+
+        LocalDate fechaActual = LocalDate.now();
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("yyMMdd");
+        String hoy = fechaActual.format(formato);
+        String archivo = "C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_PROPIOS_PRUEBA/CERTESC_90022804_"+hoy+".txt";
+
+        try(BufferedWriter escritor = new BufferedWriter(
+                new OutputStreamWriter(
+                        new FileOutputStream(
+                                archivo),
+                        "Cp1252"))){
+            for(Escolaridad e : escolaridadesParaImprimir){
+                escritor.write(e.toString());
+            }
+
         } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
 
-        /*Pruebas de print*/
+        /*
+        escolaridad.setCueAnexo(String.valueOf(alumno.getCueAnexo()));
+        escolaridad.setRegice("          "); //10 espacios en blanco
+        escolaridad.setCuilEstudiante(String.valueOf(20492162443L));
+        escolaridad.setCicloLectivo(alumno.getCicloLectivo());
+        escolaridad.setNivel(String.valueOf(alumno.getNivelEducativo()));
+        escolaridad.setGradoAnio(alumno.getGradoAño()+"");
+        escolaridad.setEsEducacionOficial("S");
+        escolaridad.setEsAlumnoRegular(alumno.getEsAlumnoRegular()+"");
+        escolaridad.setFechaInicioCicloLectivo("        "); //8 espacios en blanco
+        escolaridad.setNombreCursoCarrera("");
+        escolaridad.setFechaCertificacion("23/08/2024");
 
-        /*Escolaridad escolaridadUno = new Escolaridad("260065000","","20380809290",
-                "2024","2","5","","17/06/2024",
-                "",'S','S');
+        System.out.println(escolaridad);
 
-        Escolaridad escolaridadDos = new Escolaridad("260065000","","20380809290",
-                "2024","6","","Tecnicatura Universitaria en Desarrollo de Software","17/06/2024",
-                "03/04/2024","Si","Si");
+        for (int i = 0; i <= 5; i++) {
+            Escolaridad escolaridad = null;
+            AlumnoData alumno;
+            String tupla = apropiados.get(i);
+            int dni = Integer.parseInt(tupla.substring(2,10));
+            String apellidoNombre = tupla.substring(10,50).trim();
+            Long cuilt = Long.parseLong(tupla.substring(149,160));
 
-        System.out.println(escolaridadUno);
-        System.out.println(escolaridadDos);*/
+            alumno = alumnosGrabber.buscar(49216244,"ACEVEDO, MISAEL ISAIAS");
+
+            if(alumno == null){
+                System.out.println("--------------ALUMNO NO SE ENCUENTRA EN LA LISTA----------------");
+                System.out.println("DNI: " + dni + ".-");
+                System.out.println("APELLIDO Y NOMBRE: " + apellidoNombre + ".-");
+                System.out.println("CUIL/T: " + cuilt + ".-");
+                System.out.println("----------------------------------------------------------------");
+
+            }else if(!alumno.isAlumnoRegular()){
+                System.out.println("--------------ALUMNO NO REGULAR----------------");
+                System.out.println("DNI: " + dni + ".-");
+                System.out.println("APELLIDO Y NOMBRE: " + apellidoNombre + ".-");
+                System.out.println("CUIL/T: " + cuilt + ".-");
+                System.out.println("------------------------------------------------");
+            }else{
+                escolaridad.setCueAnexo(String.valueOf(alumno.getCueAnexo()));
+                escolaridad.setRegice("          "); //10 espacios en blanco
+                escolaridad.setCuilEstudiante(String.valueOf(cuilt));
+                escolaridad.setCicloLectivo(alumno.getCicloLectivo());
+                escolaridad.setNivel(String.valueOf(alumno.getNivelEducativo()));
+                escolaridad.setGradoAnio(alumno.getGradoAño()+"");
+                escolaridad.setEsEducacionOficial("S");
+                escolaridad.setEsAlumnoRegular(alumno.getEsAlumnoRegular()+"");
+                escolaridad.setFechaInicioCicloLectivo("        "); //8 espacios en blanco
+                escolaridad.setNombreCursoCarrera("");
+                escolaridad.setFechaCertificacion("23/08/2024");
+
+                System.out.println(escolaridad);
+
+            }
+
+        }
+        */
     }
 }

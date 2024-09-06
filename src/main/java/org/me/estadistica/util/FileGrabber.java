@@ -58,7 +58,10 @@ public class FileGrabber {
             }
             int seleccion = entradaTeclado.nextInt();
 
-            if (seleccion == 0) {
+            if(seleccion == -1){
+                entradas.entrySet().forEach(entrada -> archivosElejidos.add(entrada.getValue()));
+                enSeleccion = false;
+            } else if (seleccion == 0) {
                 enSeleccion = false;
             } else if (entradas.get(seleccion) == null) {
                 System.err.println("Por favor, elija los archivos que se encuentran entre las opciones disponibles");
@@ -66,6 +69,8 @@ public class FileGrabber {
                 archivosElejidos.add(entradas.get(seleccion));
                 entradas.remove(seleccion);
             }
+
+
         }
 
         return archivosElejidos;
