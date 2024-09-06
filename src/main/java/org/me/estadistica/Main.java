@@ -16,9 +16,9 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        FileGrabber fl = new FileGrabber("C:/Users/Admin/reportes_para_apropiacion_escolaridad/DATOS_PRUEBA");
+        FileGrabber fl = new FileGrabber("C:/Users/Usuario/Desktop/ANSES/reportes para apropiacion_escolaridad");
         List<String> rutas = fl.seleccionarArchivos();
-        List<String> apropiados = TextFileReader.readTextFile("C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_SITASI/SIE58451/APROPIA.F240826.txt");
+        List<String> apropiados = TextFileReader.readTextFile("C:/Users/Usuario/Desktop/ANSES/SIE58451/APROPIA.F240826.txt");
         List<AlumnoData> datosAlumnos = new ArrayList<>();
 
         try{
@@ -27,9 +27,10 @@ public class Main {
                 HSSFWorkbook libro = new HSSFWorkbook(fs.getRoot(),true);
                 Sheet hoja = libro.getSheetAt(0);
 
-                int cueAnexo = Integer.parseInt(hoja.getRow(1).getCell(0).getStringCellValue().split("-")[0].trim());
-                String nivel = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[2].trim();
+                int cueAnexo = Integer.parseInt(hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[0].trim());
+                String nivel = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[hoja.getRow(1).getCell(0).getStringCellValue().split(" - ").length - 2].trim();
                 String modalidad = hoja.getRow(1).getCell(0).getStringCellValue().split(" - ")[3].trim();
+
 
                 for (int i = 3; i <= hoja.getLastRowNum(); i++) {
                     Row fila = hoja.getRow(i);
@@ -47,16 +48,27 @@ public class Main {
                     }
                     alumnoAux.setNombreApellido(fila.getCell(0).getStringCellValue().replace(",", "").trim());
                     alumnoAux.setCicloLectivo(Year.now().toString());
+
                     alumnoAux.setNivelEducativo(nivel);
+                    if(cueAnexo == 260061600 || String.valueOf(cueAnexo).equalsIgnoreCase("260061600"))
+                        alumnoAux.setNivelEducativo("02");
 
                     if(modalidad.equalsIgnoreCase("Adultos")){
                         alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[1].charAt(0));
                     } else if(nivel.equalsIgnoreCase("Inicial")) {
                         if (fila.getCell(4).getStringCellValue().equalsIgnoreCase("Lactantes") ||
-                                fila.getCell(4).getStringCellValue().equalsIgnoreCase("Deambuladores")){
+                                fila.getCell(4).getStringCellValue().equalsIgnoreCase("Deambuladores")||
+                                fila.getCell(4).getStringCellValue().equalsIgnoreCase("Educación Temprana")){
                             alumnoAux.setGradoAño('0');
                         }else{
-                            alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[2].charAt(0));
+                            try{
+                                alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().split(" ")[2].charAt(0));
+                            }catch (ArrayIndexOutOfBoundsException aioobe){
+                                System.out.println(aioobe.getMessage());
+                                System.out.println(fila.getCell(4).getStringCellValue());
+                            }
+
+
                         }
                     }else{
                         alumnoAux.setGradoAño(fila.getCell(4).getStringCellValue().isEmpty() ? ' ' : fila.getCell(4).getStringCellValue().charAt(0));
@@ -130,7 +142,7 @@ public class Main {
         LocalDate fechaActual = LocalDate.now();
         DateTimeFormatter formato = DateTimeFormatter.ofPattern("yyMMdd");
         String hoy = fechaActual.format(formato);
-        String archivo = "C:/Users/Admin/reportes_para_apropiacion_escolaridad/REPORTES_PROPIOS_PRUEBA/CERTESC_90022804_"+hoy+".txt";
+        String archivo = "C:/Users/Usuario/Desktop/ANSES/CERTESC_90022804_"+hoy+".txt";
 
         try(BufferedWriter escritor = new BufferedWriter(
                 new OutputStreamWriter(
